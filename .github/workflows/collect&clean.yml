@@ -36,7 +36,7 @@ jobs:
         chmod 600 ~/.kaggle/kaggle.json
 
     - name: Run collector
-      run: python DeribitTrading/DeribitOrderBook/ETH/EP_OB/collector.py
+      run: python collector.py
 
     - name: Commit and push if there are changes
       run: |
@@ -47,4 +47,4 @@ jobs:
         git diff --quiet && git diff --staged --quiet || (git commit -m "Update orderbook data [skip ci]" && git push)
 
     - name: Run cleanup
-      run: python DeribitTrading/DeribitOrderBook/ETH/EP_OB/cleanup.py
+      run: python cleanup.py
