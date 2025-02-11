@@ -1,18 +1,20 @@
 import os
 import glob
+import json
 import subprocess
 from datetime import datetime
-from kaggle.api.kaggle_api_extended import KaggleDatasets
+from kaggle.api.kaggle_api_extended import KaggleApi
 
 def upload_to_kaggle(dataset_name, files):
     """Upload files to Kaggle dataset after processing"""
     try:
-        # Download existing dataset if it exists
-        api = KaggleDatasets()
+        # Initialize and authenticate Kaggle API
+        api = KaggleApi()
+        api.authenticate()
+        
         try:
-            api.dataset_download_files(f"federodriguezh/{dataset_name}", path='data/existing')
-            # Extract the downloaded zip file
-            subprocess.run(['unzip', '-o', f'data/existing/{dataset_name}.zip', '-d', 'data/existing'])
+            # Download existing dataset if it exists
+            api.dataset_download_files(f"federodriguezh/{dataset_name}", path='data/existing', unzip=True)
             existing_file = 'data/existing/processed_data.json'
         except:
             existing_file = None
