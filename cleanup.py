@@ -12,6 +12,9 @@ def upload_to_kaggle(dataset_name, files):
         api = KaggleApi()
         api.authenticate()
         
+        if not os.path.exists('data'):
+            os.makedirs('data')
+        
         try:
             # Download existing dataset if it exists
             api.dataset_download_files(f"federodriguezh/{dataset_name}", path='data/existing', unzip=True)
@@ -52,25 +55,29 @@ def upload_to_kaggle(dataset_name, files):
                 json.dump(record, f)
                 f.write('\n')
         
-        # Upload to Kaggle
+        # Create dataset-metadata.json
         metadata = {
             "title": dataset_name,
             "id": f"federodriguezh/{dataset_name}",
             "licenses": [{"name": "CC0-1.0"}],
             "isPrivate": True
         }
+        
+        metadata_file = os.path.join('data', 'dataset-metadata.json')
+        with open(metadata_file, 'w') as f:
+            json.dump(metadata, f)
 
+        # Upload to Kaggle without metadata parameter
         api.dataset_create_version(
             folder='data',
-            version_notes=f"Auto update {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            metadata=metadata
+            version_notes=f"Auto update {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
         
-        # Clean up processed_data.json after upload
+        # Clean up files
         if os.path.exists(processed_file):
             os.remove(processed_file)
-            
-        # Clean up existing dataset files
+        if os.path.exists(metadata_file):
+            os.remove(metadata_file)
         if os.path.exists('data/existing'):
             subprocess.run(['rm', '-rf', 'data/existing'])
         
