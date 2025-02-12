@@ -61,7 +61,7 @@ def upload_to_kaggle(dataset_name, files):
         }
 
         api.dataset_create_version(
-            folder_path='data',
+            folder='data',
             version_notes=f"Auto update {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             metadata=metadata
         )
