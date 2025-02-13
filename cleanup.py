@@ -14,6 +14,9 @@ def upload_to_kaggle(dataset_name, files):
         
         if not os.path.exists('data'):
             os.makedirs('data')
+            
+        if not os.path.exists('data/kaggle_data'):
+            os.makedirs('data/kaggle_data')
         
         try:
             # Download existing dataset if it exists
@@ -48,14 +51,14 @@ def upload_to_kaggle(dataset_name, files):
                 seen.add(record_str)
                 unique_data.append(record)
                 
-        # Write all data to new file
-        processed_file = os.path.join('data', 'processed_data.json')
+        # Write all data to new file in kaggle_data folder
+        processed_file = os.path.join('data/kaggle_data', 'processed_data.json')
         with open(processed_file, 'w') as f:
             for record in unique_data:
                 json.dump(record, f)
                 f.write('\n')
         
-        # Create dataset-metadata.json
+        # Create dataset-metadata.json in kaggle_data folder
         metadata = {
             "title": dataset_name,
             "id": f"federodriguezh/{dataset_name}",
@@ -63,13 +66,13 @@ def upload_to_kaggle(dataset_name, files):
             "isPrivate": True
         }
         
-        metadata_file = os.path.join('data', 'dataset-metadata.json')
+        metadata_file = os.path.join('data/kaggle_data', 'dataset-metadata.json')
         with open(metadata_file, 'w') as f:
             json.dump(metadata, f)
 
-        # Upload to Kaggle without metadata parameter
+        # Upload to Kaggle using kaggle_data folder
         api.dataset_create_version(
-            folder='data',
+            folder='data/kaggle_data',
             version_notes=f"Auto update {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
         
@@ -80,6 +83,8 @@ def upload_to_kaggle(dataset_name, files):
             os.remove(metadata_file)
         if os.path.exists('data/existing'):
             subprocess.run(['rm', '-rf', 'data/existing'])
+        if os.path.exists('data/kaggle_data'):
+            subprocess.run(['rm', '-rf', 'data/kaggle_data'])
         
         return True
     
