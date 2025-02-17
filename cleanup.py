@@ -58,6 +58,12 @@ def upload_to_kaggle(dataset_name, files):
                 json.dump(record, f)
                 f.write('\n')
         
+        # Check file size and rename if > 2GB
+        if os.path.getsize(processed_file) > 2 * 1024 * 1024 * 1024:  # 2GB in bytes
+            chunked_file = os.path.join('data/kaggle_data', 'chunked_data.json')
+            os.rename(processed_file, chunked_file)
+            processed_file = chunked_file
+        
         # Create dataset-metadata.json in kaggle_data folder
         metadata = {
             "title": dataset_name,
