@@ -47,4 +47,6 @@ jobs:
         git diff --quiet && git diff --staged --quiet || (git commit -m "Update orderbook data [skip ci]" && git push)
 
     - name: Run cleanup
-      run: python cleanup.py
+      run: |
+        sleep 10
+        python cleanup.py

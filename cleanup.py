@@ -108,8 +108,10 @@ def cleanup_files():
         # Upload to Kaggle
         if upload_to_kaggle("ethp-ob", json_files):
             try:
+                # Pull latest changes before git operations
+                subprocess.run(['git', 'pull'], check=True)
+                
                 # Use git rm to remove the files
-                files_to_remove = ' '.join(json_files)
                 subprocess.run(['git', 'rm', '-f'] + json_files, check=True)
                 print(f"Successfully removed files using git rm")
                 
@@ -117,10 +119,19 @@ def cleanup_files():
                 subprocess.run(['git', 'config', '--local', 'user.email', 'github-actions[bot]@users.noreply.github.com'])
                 subprocess.run(['git', 'config', '--local', 'user.name', 'github-actions[bot]'])
                 
-                # Commit and push changes
-                subprocess.run(['git', 'commit', '-m', 'Remove processed files [skip ci]'])
-                subprocess.run(['git', 'push'])
-                print("Successfully committed and pushed changes")
+                # Commit and push changes with retry logic
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        subprocess.run(['git', 'commit', '-m', 'Remove processed files [skip ci]'], check=True)
+                        subprocess.run(['git', 'push'], check=True)
+                        print("Successfully committed and pushed changes")
+                        break
+                    except subprocess.CalledProcessError as e:
+                        if attempt == max_retries - 1:
+                            raise
+                        print(f"Attempt {attempt + 1} failed, retrying...")
+                        subprocess.run(['git', 'pull'], check=True)
                 
             except subprocess.CalledProcessError as e:
                 print(f"Error in git operations: {str(e)}")
