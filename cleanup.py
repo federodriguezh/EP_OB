@@ -27,13 +27,20 @@ def upload_to_kaggle(dataset_name, files):
 
         # Read and combine all files
         combined_data = []
-        # First read existing data if available
+        
+        # Check size of existing file
         if existing_file and os.path.exists(existing_file):
-            with open(existing_file, 'r') as f:
-                for line in f:
-                    combined_data.append(json.loads(line))
+            if os.path.getsize(existing_file) > 1.5 * 1024 * 1024 * 1024:  # 1.5GB in bytes
+                # Move existing file to kaggle_data as chunked
+                chunked_file = os.path.join('data/kaggle_data', 'chunked_data.json')
+                os.rename(existing_file, chunked_file)
+            else:
+                # Read existing data if file size is under 1.5GB
+                with open(existing_file, 'r') as f:
+                    for line in f:
+                        combined_data.append(json.loads(line))
 
-        # Then add new data
+        # Add new data
         for file in files:
             with open(file, 'r') as f:
                 for line in f:
@@ -51,18 +58,12 @@ def upload_to_kaggle(dataset_name, files):
                 seen.add(record_str)
                 unique_data.append(record)
                 
-        # Write all data to new file in kaggle_data folder
+        # Write processed data to new file in kaggle_data folder
         processed_file = os.path.join('data/kaggle_data', 'processed_data.json')
         with open(processed_file, 'w') as f:
             for record in unique_data:
                 json.dump(record, f)
                 f.write('\n')
-        
-        # Check file size and rename if > 2GB
-        if os.path.getsize(processed_file) > 2 * 1024 * 1024 * 1024:  # 2GB in bytes
-            chunked_file = os.path.join('data/kaggle_data', 'chunked_data.json')
-            os.rename(processed_file, chunked_file)
-            processed_file = chunked_file
         
         # Create dataset-metadata.json in kaggle_data folder
         metadata = {
@@ -83,10 +84,8 @@ def upload_to_kaggle(dataset_name, files):
         )
         
         # Clean up files
-        if os.path.exists(processed_file):
-            os.remove(processed_file)
-        if os.path.exists(metadata_file):
-            os.remove(metadata_file)
+        for file in glob.glob('data/kaggle_data/*'):
+            os.remove(file)
         if os.path.exists('data/existing'):
             subprocess.run(['rm', '-rf', 'data/existing'])
         if os.path.exists('data/kaggle_data'):
